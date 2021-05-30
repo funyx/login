@@ -27,6 +27,7 @@ trait Signup
      */
     public function register_new_user($data = [])
     {
-        $this->save($data);
+        $dbg = $this->save($data);
+        $dbg = $dbg->get();
     }
 }

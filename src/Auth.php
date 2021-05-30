@@ -211,8 +211,16 @@ class Auth
      */
     protected function loadFromCache(): void
     {
-        $this->user->data = $this->cache->getData();
-        $this->user->setId($this->user->data[$this->user->id_field] ?? null);
+        $cache = $this->cache->getData();
+        if(!empty($cache)){
+            if($this->user->isEntity()){
+                $this->user = $this->user->getModel();
+            }
+            $this->user->passwordHash = isset($cache[$this->fieldPassword]) ?$cache[$this->fieldPassword]: '';
+            unset($cache[$this->fieldPassword]);
+            $this->user = $this->user->createEntity()->setMulti($cache);
+            $this->user->setId($this->user->data[$this->user->id_field] ?? null);
+        }
     }
 
     /**
@@ -220,7 +228,7 @@ class Auth
      */
     public function isLoggedIn(): bool
     {
-        return $this->user->loaded();
+        return $this->user->isEntity() && $this->user->loaded();
     }
 
     /**
@@ -233,7 +241,7 @@ class Auth
 
         $user = new $this->user($this->user->persistence);
 
-        $user->tryLoadBy($this->fieldLogin, $email);
+        $user = $user->tryLoadBy($this->fieldLogin, $email);
         if ($user->loaded()) {
             // verify if the password matches
             $pw_field = $user->getField($this->fieldPassword);
@@ -241,7 +249,9 @@ class Auth
                 $this->hook(self::HOOK_LOGGED_IN, [$user]);
                 // save user record in cache
                 if ($this->cacheEnabled) {
-                    $this->cache->setData($user->get());
+                    $this->cache->setData(array_merge($user->get(),[
+                        'password' => $user->getPasswordHash()
+                    ]));
                     $this->loadFromCache();
                 } else {
                     $this->user = clone $user;

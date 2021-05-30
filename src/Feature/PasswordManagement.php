@@ -12,6 +12,17 @@ use Atk4\Login\Field\Password;
  */
 trait PasswordManagement
 {
+    public string $passwordHash;
+
+    public function getPasswordHash()
+    {
+        return $this->getModel()->passwordHash;
+    }
+
+    public function setPasswordHash(string $hash)
+    {
+        return $this->getModel()->passwordHash = $hash;
+    }
     /**
      * This must be consistent with config.yaml.
      */

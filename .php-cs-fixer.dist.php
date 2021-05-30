@@ -8,7 +8,7 @@ $finder = PhpCsFixer\Finder::create()
         'vendor',
     ]);
 
-return PhpCsFixer\Config::create()
+return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
     ->setRules([
         '@PhpCsFixer' => true,

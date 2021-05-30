@@ -15,6 +15,7 @@ class PasswordFieldTest extends Generic
         $m = new Model();
         $m->addField('p', [Password::class]);
 
+        $m = $m->createEntity();
         $m->set('p', 'mypass');
 
         // when setting password, you can retrieve it back while it's not yet saved
@@ -31,57 +32,55 @@ class PasswordFieldTest extends Generic
     {
         $a = [];
         $p = new Persistence\Array_($a);
-        $m = new Model($p);
-
-        $m->addField('p', [Password::class]);
+        $m = new ModelWithPassword($p);
 
         // making sure cloning does not break things
-        $m = clone $m;
+        $m = (clone $m)->createEntity();
 
         // when setting password, you can retrieve it back while it's not yet saved
-        $m->set('p', 'mypass');
-        $this->assertSame('mypass', $m->get('p'));
+        $m->set('password', 'mypass');
+        $this->assertSame('mypass', $m->get('password'));
         $m->save();
 
         // stored encoded password
-        $enc = $this->getProtected($p, 'data')['data']->getRowById($m, 1)->getValue('p');
+        $enc = $this->getProtected($p, 'data')['data']->getRowById($m, 1)->getValue('password');
         $this->assertTrue(is_string($enc));
         $this->assertNotSame('mypass', $enc);
 
         // should have reloaded also
-        $this->assertNull($m->get('p'));
+        $this->assertNull($m->get('password'));
 
         // password value after load is null, but it still should validate/verify
-        $this->assertFalse($m->getField('p')->verify('badpass'));
-        $this->assertTrue($m->getField('p')->verify('mypass'));
+        $this->assertFalse($m->getField('password')->verify('badpass'));
+        $this->assertTrue($m->getField('password')->verify('mypass'));
 
         // password shouldn't be dirty here
-        $this->assertFalse($m->isDirty('p'));
+        $this->assertFalse($m->isDirty('password'));
 
-        $m->set('p', 'newpass');
-        $this->assertTrue($m->isDirty('p'));
-        $this->assertFalse($m->getField('p')->verify('mypass'));
-        $this->assertTrue($m->getField('p')->verify('newpass'));
+        $dbg = $m->getPasswordHash();
+        $m = $m->set('password', 'newpass');
+        $dbg = $m->getPasswordHash();
+        $this->assertTrue($m->isDirty('password'));
+        $this->assertFalse($m->getField('password')->verify('mypass'));
+        $this->assertTrue($m->getField('password')->verify('newpass'));
 
         $m->save();
-        $this->assertFalse($m->isDirty('p'));
-        $this->assertFalse($m->getField('p')->verify('mypass'));
-        $this->assertTrue($m->getField('p')->verify('newpass'));
+        $this->assertFalse($m->isDirty('password'));
+        $this->assertFalse($m->getField('password')->verify('mypass'));
+        $this->assertTrue($m->getField('password')->verify('newpass'));
 
         // will have new hash
-        $this->assertNotSame($enc, $this->getProtected($p, 'data')['data']->getRowById($m, 1)->getValue('p'));
+        $this->assertNotSame($enc, $this->getProtected($p, 'data')['data']->getRowById($m, 1)->getValue('password'));
     }
 
     public function testCanNotCompareEmptyException()
     {
         $a = [];
         $p = new Persistence\Array_($a);
-        $m = new Model($p);
-
-        $m->addField('p', [Password::class]);
+        $m = new ModelWithPassword($p);
 
         $this->expectException(\Atk4\Data\Exception::class);
-        $m->getField('p')->verify('mypass'); // tries to compare empty password field value with value 'mypass'
+        $m->getField('password')->verify('mypass'); // tries to compare empty password field value with value 'mypass'
     }
 
     public function testSuggestPassword()

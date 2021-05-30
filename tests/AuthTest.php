@@ -49,6 +49,7 @@ class AuthTest extends Generic
         $this->assertFalse($auth->isLoggedIn());
 
         // wrong login
+        $dbg = $this->db->dsql()->table('login_user')->getRows();
         $ok = $auth->tryLogin('admin', 'wrong');
         $this->assertFalse($ok);
         $this->assertFalse($auth->isLoggedIn());

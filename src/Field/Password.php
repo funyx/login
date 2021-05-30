@@ -20,14 +20,6 @@ class Password extends Field
     public $type = 'password';
 
     /**
-     * Keeping the actual hash protected, in case we have to validate password with
-     * compare().
-     *
-     * @var string
-     */
-    protected $passwordHash;
-
-    /**
      * Optional callable for encrypting password.
      * Use it if you need to customize your password encryption algorithm.
      * Receives parameters - plaintext password.
@@ -90,7 +82,7 @@ class Password extends Field
      */
     public function normalize($value)
     {
-        $this->passwordHash = null;
+        $this->getOwner()->passwordHash = '';
 
         return parent::normalize($value);
     }
@@ -115,12 +107,12 @@ class Password extends Field
 
         // encrypt password
         if (is_callable($this->encryptMethod)) {
-            $this->passwordHash = call_user_func_array($this->encryptMethod, [$password]);
+            $this->getOwner()->setPasswordHash(call_user_func_array($this->encryptMethod, [$password]));
         } else {
-            $this->passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $this->getOwner()->setPasswordHash(password_hash($password, PASSWORD_DEFAULT));
         }
 
-        return $this->passwordHash;
+        return $this->getOwner()->getPasswordHash();
     }
 
     /**
@@ -133,7 +125,7 @@ class Password extends Field
      */
     public function decrypt(?string $password, Field $f, Persistence $p)
     {
-        $this->passwordHash = $password;
+        $this->getOwner()->passwordHash = $password;
         if ($p instanceof UI) {
             return $password;
         }
@@ -150,7 +142,8 @@ class Password extends Field
      */
     public function verify($password): bool
     {
-        if ($this->passwordHash === null) {
+        $hash = $this->getOwner()->getPasswordHash();
+        if ($hash === null) {
             // perhaps we currently hold a password and it's not saved yet.
             $v = $this->get();
 
@@ -164,8 +157,8 @@ class Password extends Field
 
         // verify password
         $v = is_callable($this->verifyMethod)
-                ? call_user_func_array($this->verifyMethod, [$password, $this->passwordHash])
-                : password_verify($password, $this->passwordHash);
+                ? call_user_func_array($this->verifyMethod, [$password, $hash])
+                : password_verify($password, $hash);
 
         return $v;
     }

@@ -34,7 +34,7 @@ class PasswordManagementTest extends Generic
         $this->assertIsString($m->executeUserAction('generate_random_password', 4));
 
         // generate new password and set model record password field and save it and email if possible
-        $m->load(1);
+        $m = $m->load(1);
         // replace callback so we can catch it
         $m->getUserAction('sendEmail')->callback = function () {
             $args = func_get_args();

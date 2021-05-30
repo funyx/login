@@ -16,7 +16,7 @@ class SendEmailActionTest extends Generic
 
         $this->assertTrue($m->hasUserAction('sendEmail'));
 
-        $m->load(1);
+        $m = $m->load(1);
 
         // replace callback so we can catch it
         $m->getUserAction('sendEmail')->callback = function () {

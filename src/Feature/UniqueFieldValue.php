@@ -23,7 +23,7 @@ trait UniqueFieldValue
             if ($m->isDirty($field)) {
                 $a = new static($m->persistence);
                 $a->addCondition($a->id_field, '!=', $m->getId());
-                $a->tryLoadBy($field, $m->get($field));
+                $a = $a->tryLoadBy($field, $m->get($field));
                 if ($a->loaded()) {
                     throw new ValidationException([$field => ucwords($field) . ' with such value already exists'], $this);
                 }
